@@ -9,6 +9,8 @@ import javafx.application.Platform
 import javafx.embed.swing.JFXPanel
 import javafx.scene.Group
 import javafx.scene.Scene
+import jetbrains.datalore.base.event.MouseEventSpec
+import jetbrains.datalore.base.event.awt.AwtEventUtil
 import jetbrains.datalore.base.geometry.DoubleVector
 import jetbrains.datalore.plot.AwtPlotFactory
 import jetbrains.datalore.plot.DisposableJPanel
@@ -24,6 +26,8 @@ import jetbrains.datalore.vis.svg.SvgSvgElement
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.Rectangle
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import javax.swing.JComponent
 
 object MonolithicAwtLM {
@@ -63,6 +67,16 @@ object MonolithicAwtLM {
                 val plotContainer = PlotContainer(plot, plotBuildInfo.size)
                 val plotComponent = buildPlotComponent(plotContainer)
 
+                // Move tooltip when map moved
+                plotComponent.addMouseMotionListener(object : MouseAdapter() {
+                    override fun mouseDragged(e: MouseEvent) {
+                        super.mouseDragged(e)
+                        executor {
+                            plotContainer.mouseEventPeer.dispatch(MouseEventSpec.MOUSE_MOVED, AwtEventUtil.translate(e))
+                        }
+                    }
+                })
+
                 return if (plotContainer.liveMapFigures.isNotEmpty()) {
                     @Suppress("UNCHECKED_CAST")
                     buildPlotLiveMapComponent(
@@ -93,7 +107,7 @@ object MonolithicAwtLM {
         panel.add(plotComponent)
 
         liveMapFigures.forEach { canvasFigure ->
-            val canvasBounds = canvasFigure .bounds().get()
+            val canvasBounds = canvasFigure.bounds().get()
             val rootGroup = Group()
 
             JFXPanel()
