@@ -5,6 +5,7 @@
 
 package jetbrains.datalore.vis.swing
 
+import javafx.embed.swing.JFXPanel
 import jetbrains.datalore.base.registration.Disposable
 import jetbrains.datalore.vis.svg.*
 import jetbrains.datalore.vis.svg.event.SvgAttributeEvent
@@ -14,12 +15,11 @@ import java.awt.Graphics2D
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.event.MouseMotionListener
-import javax.swing.JPanel
 
 class BatikMapperComponent(
     svgRoot: SvgSvgElement,
     messageCallback: BatikMessageCallback
-) : JPanel(), Disposable {
+) : JFXPanel(), Disposable {
 
     private val myHelper: BatikMapperComponentHelper
     private var myIsDisposed: Boolean = false
