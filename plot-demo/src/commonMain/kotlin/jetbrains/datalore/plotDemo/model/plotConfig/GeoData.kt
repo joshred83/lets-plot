@@ -12,16 +12,17 @@ class GeoData : PlotConfigDemoBase() {
 
     fun plotSpecList(): List<Map<String, Any>> {
         return listOf(
-            mapJoinDict(),
-            mapJoinPair(),
-            mapIdAndMapJoinNoneString(),
-            emptyDataGdf(),
-            emptyMapGdf(),
-            geomText(),
-            mixedShapesGeom("polygon"),
-            mixedShapesGeom("point"),
-            mixedShapesGeom("path"),
-            mapRegionId()
+            mixed("path")
+//            mapJoinDict(),
+//            mapJoinPair(),
+//            mapIdAndMapJoinNoneString(),
+//            emptyDataGdf(),
+//            emptyMapGdf(),
+//            geomText(),
+//            mixedShapesGeom("polygon"),
+//            mixedShapesGeom("point"),
+//            mixedShapesGeom("path"),
+//            mapRegionId()
         )
     }
 
@@ -200,13 +201,45 @@ class GeoData : PlotConfigDemoBase() {
                 |        "geom": "$geomName", 
                 |        "map_data_meta": {"geodataframe": {"geometry": "coord"}}, 
                 |        "map": {
-                |            "id": ["MPolygon", "Point", "lineA", "lineB"], 
-                |            "coord": ["$multipolygon", "$pointA", "$lineA", "$lineB"]
+                |            "id": ["MPolygon"], 
+                |            "coord": ["$multipolygon"]
                 |        }
                 |    }]
                 |}
                 """.trimMargin()
             return parsePlotSpec(plotSpec)
+        }
+
+        fun mixed(geomName: String): Map<String, Any> {
+            val spec = """
+                {
+                  "kind": "plot",
+                  "layers": [
+                    {
+                      "geom": "$geomName",
+                      "mapping": { "color": "kind" },
+                      "data": {
+                        "kind": ["Point", "MPoint", "Line", "MLine", "Polygon", "MPolygon"],
+                        "coord": [
+                          "{\"type\": \"Point\", \"coordinates\": [-5.0, 17.0]}",
+                          "{\"type\": \"MultiPoint\", \"coordinates\": [[3.0, 15.0], [6.0, 13.0]]}",
+                          "{\"type\": \"MultiPoint\", \"coordinates\": [[10.0, 10.0], [5.0, 15.0]]}",
+                          "{\"type\": \"MultiLineString\", \"coordinates\": [[[10.0, 0.0], [15.0, 5.0]], [[10.0, 5.0], [15.0, 0.0]]]}",
+                          "{\"type\": \"Polygon\", \"coordinates\": [[[1.0, 1.0], [1.0, 9.0], [9.0, 9.0], [9.0, 1.0], [1.0, 1.0]], [[2.0, 2.0], [3.0, 2.0], [3.0, 3.0], [2.0, 3.0], [2.0, 2.0]], [[4.0, 4.0], [6.0, 4.0], [6.0, 6.0], [4.0, 6.0], [4.0, 4.0]]]}",
+                          "{\"type\": \"MultiPolygon\", \"coordinates\": [[[[11.0, 12.0], [13.0, 14.0], [15.0, 13.0], [11.0, 12.0]]]]}"
+                        ]
+                      },
+                      "data_meta": {
+                        "geodataframe": {
+                          "geometry": "coord"
+                        }
+                      }
+                    }
+                  ]
+                }
+            """.trimIndent()
+
+            return parsePlotSpec(spec)
         }
     }
 }

@@ -33,7 +33,7 @@ class GeometryFromGeoDataFrameChange : GeometryFromGeoPositionsChange() {
                 "Geometries are empty or no matching types. Expected: " +
                         when (geoDataKind) {
                             GeoDataKind.POINT -> "Point, MultiPoint"
-                            GeoDataKind.PATH -> "LineString, MultiLineString"
+                            GeoDataKind.PATH -> "LineString, MultiLineString, Polygon, MultiPolygon"
                             GeoDataKind.BOUNDARY -> "Polygon, MultiPolygon"
                             GeoDataKind.BBOX -> "MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon"
                         }
@@ -42,12 +42,12 @@ class GeometryFromGeoDataFrameChange : GeometryFromGeoPositionsChange() {
 
         val dataTable = mapSpec.getList(MapJoin.ID)
             ?.zip(geometryTables)
-            ?.fold(mutableMapOf<String, MutableList<Any>>(), { dataFrame, (id, geometryTable) ->
+            ?.fold(mutableMapOf<String, MutableList<Any?>>(), { dataFrame, (id, geometryTable) ->
                 dataFrame
                     .concat(geometryTable)
                     .concat(MapJoin.ID, MutableList(geometryTable.rowCount) { id!! })
             })
-            ?: geometryTables.fold(mutableMapOf<String, MutableList<Any>>(), { dataFrame, geometryTable ->
+            ?: geometryTables.fold(mutableMapOf<String, MutableList<Any?>>(), { dataFrame, geometryTable ->
                 dataFrame.concat(geometryTable)
             })
 
@@ -55,17 +55,36 @@ class GeometryFromGeoDataFrameChange : GeometryFromGeoPositionsChange() {
         mapSpec.putAll(dataTable)
     }
 
-    private fun parseGeometry(geoJson: String, geoDataKind: GeoDataKind): MutableMap<String, MutableList<Double>> {
-        val geometryTable = mutableMapOf<String, MutableList<Double>>()
+    private fun parseGeometry(geoJson: String, geoDataKind: GeoDataKind): MutableMap<String, MutableList<Double?>> {
+        val geometryTable = mutableMapOf<String, MutableList<Double?>>()
 
         when (geoDataKind) {
             GeoDataKind.POINT -> defaultConsumer {
-                onPoint = geometryTable::append
+                onPoint = { geometryTable.append(it) }
                 onMultiPoint = { it.forEach(geometryTable::append) }
             }
             GeoDataKind.PATH -> defaultConsumer {
-                onLineString = { it.forEach(geometryTable::append) }
-                onMultiLineString = { it.flatten().forEach(geometryTable::append) }
+                onLineString = { it.forEach(geometryTable::append); }
+                onMultiLineString = { multiLine ->
+                    multiLine.forEach { line ->
+                        line.forEach(geometryTable::append)
+                        geometryTable.append(null)
+                    }
+                }
+//                onPolygon = { polygon ->
+//                    polygon.forEach { ring ->
+//                        ring.forEach(geometryTable::append)
+//                        geometryTable.append(null)
+//                    }
+//                }
+//                onMultiPolygon = { multiPolygon ->
+//                    multiPolygon.forEach { polygon ->
+//                        polygon.forEach { ring ->
+//                            ring.forEach(geometryTable::append)
+//                            geometryTable.append(null)
+//                        }
+//                    }
+//                }
             }
             GeoDataKind.BOUNDARY -> defaultConsumer {
                 onPolygon = { it.flatten().forEach(geometryTable::append) }
@@ -118,26 +137,26 @@ class GeometryFromGeoDataFrameChange : GeometryFromGeoPositionsChange() {
     }
 }
 
-private val <K, V : List<Any>> Map<K, V>.rowCount get() = values.firstOrNull()?.size ?: 0
+private val <K, V : List<Any?>> Map<K, V>.rowCount get() = values.firstOrNull()?.size ?: 0
 
-private fun <T> MutableMap<String, MutableList<T>>.concat(other: Map<String, List<T>>) = apply {
+private fun <T> MutableMap<String, MutableList<T?>>.concat(other: Map<String, List<T?>>) = apply {
     other.forEach { (key, value) -> getOrPut(key, { ArrayList() }).addAll(value) }
 }
 
-private fun <T> MutableMap<String, MutableList<T>>.concat(column: String, values: List<T>) = apply {
+private fun <T> MutableMap<String, MutableList<T?>>.concat(column: String, values: List<T?>) = apply {
     concat(mutableMapOf(column to values))
 }
 
-private fun MutableMap<String, MutableList<Double>>.append(key: String, value: Double) {
+private fun MutableMap<String, MutableList<Double?>>.append(key: String, value: Double?) {
     getOrPut(key, { mutableListOf() }).add(value)
 }
 
-private fun MutableMap<String, MutableList<Double>>.append(p: Vec<LonLat>) {
-    append(POINT_X, p.x)
-    append(POINT_Y, p.y)
+private fun MutableMap<String, MutableList<Double?>>.append(p: Vec<LonLat>?) {
+    append(POINT_X, p?.x)
+    append(POINT_Y, p?.y)
 }
 
-private fun MutableMap<String, MutableList<Double>>.append(rect: Rect<LonLat>) {
+private fun MutableMap<String, MutableList<Double?>>.append(rect: Rect<LonLat>) {
     append(RECT_XMIN, rect.left)
     append(RECT_XMAX, rect.right)
     append(RECT_YMIN, rect.top)
