@@ -19,10 +19,15 @@ import jetbrains.datalore.plot.config.Option.Meta.MAP_DATA_META
 import jetbrains.datalore.plot.config.Option.Meta.MapJoin
 import jetbrains.datalore.plot.config.Option.PlotBase.DATA
 import jetbrains.datalore.plot.config.Option.PlotBase.MAPPING
+import jetbrains.datalore.plot.config.PlotConfig
+import jetbrains.datalore.plot.parsePlotSpec
 import jetbrains.datalore.plot.server.config.ServerSideTestUtil.createLayerConfigsByLayerSpec
+import jetbrains.datalore.plot.server.config.ServerSideTestUtil.createLayerConfigsWithoutEncoding
 import jetbrains.datalore.plot.server.config.ServerSideTestUtil.geomPolygonSpec
 import jetbrains.datalore.plot.server.config.SingleLayerAssert.Companion.assertThat
 import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.fail
 
 class GeoDataFrameMappingChangeTest {
 
@@ -69,6 +74,50 @@ class GeoDataFrameMappingChangeTest {
 
         assertThat(cfg)
                 .haveMapGeometries(GEOMETRIES)
+    }
+
+    @Test
+    fun `vertex sampling triggered for ggplot DataFrame without any mappings to it from geom_polygon`() {
+        val x = mutableListOf<Double>()
+        val y = mutableListOf<Double>()
+        (0..21_000).forEach { x += it.toDouble(); y += it.toDouble() }
+
+        val pointA = """{\"type\": \"Point\", \"coordinates\": [12.0, 22.0]}"""
+        val lineA = """{\"type\": \"LineString\", \"coordinates\": [[15.0, 21.0], [29, 14], [33, 19]]}"""
+        val lineB = """{\"type\": \"LineString\", \"coordinates\": [[3.0, 3.0], [7, 7], [10, 10]]}"""
+        val multipolygon =
+            """{\"type\": \"MultiPolygon\", \"coordinates\": [[[[11.0, 12.0], [13.0, 14.0], [15.0, 13.0], [11.0, 12.0]]]]}"""
+
+        val spec = """
+                |{
+                |    "kind": "plot",
+                |    "data": {
+                |       "px": [${x.joinToString(transform = Double::toString)}],
+                |       "py": [${y.joinToString(transform = Double::toString)}]
+                |    },
+                |     
+                |    "layers": [
+                |       {
+                |           "geom": "polygon", 
+                |           "map_data_meta": {"geodataframe": {"geometry": "coord"}}, 
+                |           "map": {
+                |               "id": ["MPolygon", "Point", "lineA", "lineB"], 
+                |               "coord": ["$multipolygon", "$pointA", "$lineA", "$lineB"]
+                |           }
+                |       },
+                |       {
+                |           "geom": "point",
+                |           "mapping": { "x": "px", "y": "py" }
+                |       }
+                |    ]
+                |}
+                """.trimMargin()
+
+        val plotSpec = ServerSideTestUtil.serverTransformWithoutEncoding(parsePlotSpec(spec))
+
+        if (PlotConfig.isFailure(plotSpec)) {
+            fail(PlotConfig.getErrorMessage(plotSpec))
+        }
     }
 
     companion object {
