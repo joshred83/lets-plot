@@ -10,6 +10,7 @@ import jetbrains.datalore.plot.base.DataFrame
 import jetbrains.datalore.plot.base.DataFrame.Variable
 import jetbrains.datalore.plot.base.data.DataFrameUtil
 import jetbrains.datalore.plot.base.stat.Stats
+import jetbrains.datalore.plot.builder.VarBinding
 import jetbrains.datalore.plot.builder.assemble.TypedScaleProviderMap
 import jetbrains.datalore.plot.builder.data.DataProcessing
 import jetbrains.datalore.plot.builder.data.GroupingContext
@@ -257,16 +258,19 @@ open class PlotConfigServerSide(opts: Map<String, Any>) : PlotConfig(opts) {
                 }
 
                 // Apply sampling to layer tile data if necessary
-                tileLayerDataAfterStat =
-                    PlotSampling.apply(tileLayerDataAfterStat, // layerConfig,
-                        layerConfig.samplings!!,
-                        groupingContextAfterStat.groupMapper,
-                        { message ->
-                            layerIndexAndSamplingMessage(
-                                layerIndex,
-                                createSamplingMessage(message, layerConfig)
-                            )
-                        })
+                // Do not apply sampling if data is not used by layer (e.g. geom_polygon with map parameter)
+                if (tileLayerDataAfterStat.variables().intersect(layerConfig.varBindings.map(VarBinding::variable)).isNotEmpty()) {
+                    tileLayerDataAfterStat =
+                        PlotSampling.apply(tileLayerDataAfterStat, // layerConfig,
+                            layerConfig.samplings!!,
+                            groupingContextAfterStat.groupMapper,
+                            { message ->
+                                layerIndexAndSamplingMessage(
+                                    layerIndex,
+                                    createSamplingMessage(message, layerConfig)
+                                )
+                            })
+                }
                 result[tileIndex].add(tileLayerDataAfterStat)
             }
 
