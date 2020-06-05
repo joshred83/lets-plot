@@ -5,27 +5,29 @@
 
 package jetbrains.datalore.vis.swing
 
-import javafx.embed.swing.JFXPanel
 import jetbrains.datalore.base.registration.Disposable
 import jetbrains.datalore.vis.svg.*
 import jetbrains.datalore.vis.svg.event.SvgAttributeEvent
+import java.awt.Color
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.event.MouseMotionListener
+import javax.swing.JPanel
 
 class BatikMapperComponent(
     svgRoot: SvgSvgElement,
     messageCallback: BatikMessageCallback
-) : JFXPanel(), Disposable {
+) : JPanel(), Disposable {
 
     private val myHelper: BatikMapperComponentHelper
     private var myIsDisposed: Boolean = false
 
     init {
         isFocusable = true
+        background = Color(0,0,0,0)
 
         myHelper =
             BatikMapperComponentHelper.forUnattached(svgRoot, messageCallback)
