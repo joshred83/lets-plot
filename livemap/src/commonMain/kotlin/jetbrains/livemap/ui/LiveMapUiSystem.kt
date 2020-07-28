@@ -96,7 +96,7 @@ class LiveMapUiSystem(
         val osm = Text().apply {
             color = Color.BLACK
             fontFamily = CONTRIBUTORS_FONT_FAMILY
-            fontHeight = 11.0
+            fontSize = 11.0
             text = listOf(LINK_TO_OSM_CONTRIBUTORS)
         }
 
