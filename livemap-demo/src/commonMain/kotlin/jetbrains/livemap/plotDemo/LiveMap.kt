@@ -12,16 +12,16 @@ import kotlin.random.Random
 class LiveMap : PlotConfigDemoBase() {
     fun plotSpecList(): List<Map<String, Any>> {
         return listOf(
-            multiLayerTooltips()
-//            mapJoinBar()
-//            antiMeridian()
-//            tooltips()
+            multiLayerTooltips(),
+//            mapJoinBar(),
+//            antiMeridian(),
+//            tooltips(),
 //            symbol_point(),
 //            geom_point()
 //            fourPointsTwoLayers(),
 //            basic(),
 //            bunch(),
-//            facet()
+           facet()
         )
     }
 
