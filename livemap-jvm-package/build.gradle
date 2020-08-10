@@ -27,6 +27,14 @@ kotlin {
                 implementation kotlin('stdlib-jdk8')
             }
         }
+        jvmTest {
+            dependencies {
+                implementation kotlin('test')
+                implementation kotlin('test-junit')
+                implementation project(':test-common')
+                implementation project(':vis-svg-mapper-jfx')
+            }
+        }
     }
 }
 
